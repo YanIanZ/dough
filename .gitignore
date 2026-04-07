@@ -4,10 +4,9 @@
 **/.project
 **/.idea
 **/target
+**/build
+.gradle
 
 *.iml
 
-**pom.xml.versionsBackup
-dependency-reduced-pom.xml
 publish.bat
-.ci-friendly-pom.xml

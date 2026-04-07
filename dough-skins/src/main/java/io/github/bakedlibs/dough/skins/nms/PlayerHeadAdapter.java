@@ -13,6 +13,8 @@ import com.mojang.authlib.GameProfile;
 
 import io.github.bakedlibs.dough.common.DoughLogger;
 import io.github.bakedlibs.dough.versions.MinecraftVersion;
+import io.github.bakedlibs.dough.versions.VersionResolver;
+import io.github.bakedlibs.dough.versions.VersionSupportInfo;
 
 public interface PlayerHeadAdapter {
 
@@ -21,7 +23,13 @@ public interface PlayerHeadAdapter {
 
     public static @Nullable PlayerHeadAdapter get() {
         try {
+            VersionSupportInfo supportInfo = VersionResolver.resolveInfo();
             MinecraftVersion version = MinecraftVersion.get();
+            String adapterName = supportInfo.getAdapterName();
+
+            if ("v26_1_1".equals(adapterName) || "v1_21_11".equals(adapterName)) {
+                return new PlayerHeadAdapter20v5();
+            }
 
             if (version.isAtLeast(1, 20, 5)) {
                 // 1.20.5 mappings

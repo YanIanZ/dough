@@ -12,6 +12,8 @@ import org.bukkit.inventory.ItemStack;
 
 import io.github.bakedlibs.dough.common.DoughLogger;
 import io.github.bakedlibs.dough.versions.MinecraftVersion;
+import io.github.bakedlibs.dough.versions.VersionResolver;
+import io.github.bakedlibs.dough.versions.VersionSupportInfo;
 
 public interface ItemNameAdapter {
 
@@ -21,12 +23,27 @@ public interface ItemNameAdapter {
 
     public static @Nullable ItemNameAdapter get() {
         try {
+            VersionSupportInfo supportInfo = VersionResolver.resolveInfo();
+
             if (MinecraftVersion.isMocked()) {
                 // Special case for MockBukkit
                 return new ItemNameAdapterMockBukkit();
             }
 
             MinecraftVersion version = MinecraftVersion.get();
+            String adapterName = supportInfo.getAdapterName();
+
+            if ("v26_1_1".equals(adapterName)) {
+                if (PaperLib.isPaper()) {
+                    return new ItemNameAdapterPaper();
+                }
+
+                return new ItemNameAdapter20v5();
+            }
+
+            if ("v1_21_11".equals(adapterName) && PaperLib.isPaper()) {
+                return new ItemNameAdapterPaper();
+            }
 
             if (version.isAtLeast(1, 20, 4) && PaperLib.isPaper()) {
                 return new ItemNameAdapterPaper();
