@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.github.YanIanZ.dough"
-version = providers.gradleProperty("projectVersion").orElse("1.3.0").get()
+version = providers.gradleProperty("projectVersion").orElse("1.4.0").get()
 
 val paperApiVersion = "1.21.11-R0.1-SNAPSHOT"
 val spigotApiVersion = "1.21.11-R0.2-SNAPSHOT"
@@ -25,6 +25,7 @@ val commonsLangVersion = "2.6"
 subprojects {
     apply(plugin = "java-library")
     apply(plugin = "jacoco")
+    apply(plugin = "maven-publish")
 
     group = rootProject.group
     version = rootProject.version
@@ -66,6 +67,20 @@ subprojects {
         }
         withSourcesJar()
         withJavadocJar()
+    }
+
+    afterEvaluate {
+        configure<PublishingExtension> {
+            publications {
+                create<MavenPublication>("mavenJava") {
+                    if (components.names.contains("shadow")) {
+                        from(components["shadow"])
+                    } else {
+                        from(components["java"])
+                    }
+                }
+            }
+        }
     }
 
     tasks.withType<JavaCompile>().configureEach {
