@@ -2,17 +2,11 @@
 
 <hr />
 <p align="center">
-    <a href="https://github.com/baked-libs/dough/actions">
-        <img alt="Build Status" src="https://github.com/baked-libs/dough/actions/workflows/gradle.yml/badge.svg?event=push" />
+    <a href="https://github.com/YanIanZ/dough/actions">
+        <img alt="Build Status" src="https://github.com/YanIanZ/dough/actions/workflows/gradle.yml/badge.svg?event=push" />
     </a>
-    <a href="https://javadoc.io/doc/io.github.baked-libs/dough-api">
-	<img alt="javadocs" src="https://javadoc.io/badge2/io.github.baked-libs/dough-api/javadoc.svg" />
-    </a>
-    <a href="https://sonarcloud.io/project/overview?id=baked-libs_dough">
-        <img alt="Code Coverage" src="https://sonarcloud.io/api/project_badges/measure?project=baked-libs_dough&metric=coverage" />
-    </a>
-    <a href="https://sonarcloud.io/project/overview?id=baked-libs_dough">
-        <img alt="Maintainability" src="https://sonarcloud.io/api/project_badges/measure?project=baked-libs_dough&metric=sqale_rating" />
+    <a href="https://jitpack.io/#YanIanZ/dough">
+	<img alt="jitpack" src="https://jitpack.io/v/YanIanZ/dough.svg" />
     </a>
 </p>
 <hr />
@@ -30,7 +24,7 @@ This repository uses Gradle for local and CI builds.
 ```
 
 ## :mag: Getting Started
-Dough is hosted on Maven Central (OSS Sonatype) for easy access.
+Dough is hosted on JitPack for easy access from this fork.
 Furthermore, it consists of multiple different submodules.
 
 If you want to utilise the entirety of dough, use the artifact `dough-api`.<br>
@@ -38,17 +32,17 @@ Otherwise replace `dough-api` in the following examples with whatever module you
 some modules have dependencies on other modules, all modules require `dough-common` as an example.
 
 ### Adding dough via Gradle
-Dough can easily be included in Gradle using `mavenCentral()`.<br />
-Simply replace `[DOUGH VERSION]` with the most up to date version of dough:
-![Maven Central](https://img.shields.io/maven-central/v/io.github.baked-libs/dough?label=latest%20version)
+Dough can easily be included in Gradle using `jitpack.io`.<br />
+Simply replace `[DOUGH VERSION]` with the most up to date version branch or tag of dough:
+![JitPack](https://img.shields.io/jitpack/v/github/YanIanZ/dough?label=latest%20version)
 
 ```gradle
 repositories {
-	mavenCentral()
+	maven("https://jitpack.io")
 }
 
 dependencies {
-	implementation 'io.github.baked-libs:dough-api:[DOUGH VERSION]'
+	implementation 'com.github.YanIanZ.dough:dough-api:[DOUGH VERSION]'
 }
 ```
 

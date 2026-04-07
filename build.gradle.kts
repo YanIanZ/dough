@@ -8,7 +8,7 @@ plugins {
     id("com.gradleup.shadow") version "8.3.6" apply false
 }
 
-group = "io.github.baked-libs"
+group = "com.github.YanIanZ.dough"
 version = providers.gradleProperty("projectVersion").orElse("1.3.0").get()
 
 val paperApiVersion = "1.21.11-R0.1-SNAPSHOT"
