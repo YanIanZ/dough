@@ -9,7 +9,7 @@ plugins {
 }
 
 group = "com.github.YanIanZ.dough"
-version = providers.gradleProperty("projectVersion").orElse("1.4.0").get()
+version = providers.gradleProperty("projectVersion").orElse("1.4.1").get()
 
 val paperApiVersion = "1.21.11-R0.1-SNAPSHOT"
 val spigotApiVersion = "1.21.11-R0.2-SNAPSHOT"
@@ -150,6 +150,7 @@ project(":dough-skins") {
     dependencies {
         compileOnly(project(":dough-common"))
         compileOnly(project(":dough-reflection"))
+        compileOnly(project(":dough-scheduling"))
         compileOnly("com.mojang:authlib:$authlibVersion")
     }
 }

@@ -24,6 +24,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import io.github.bakedlibs.dough.common.DoughLogger;
+import io.github.bakedlibs.dough.scheduling.FoliaScheduler;
 
 public class PlayerSkin {
 
@@ -103,7 +104,7 @@ public class PlayerSkin {
         CompletableFuture<PlayerSkin> future = new CompletableFuture<>();
         DoughLogger logger = new DoughLogger(plugin.getServer(), "skins");
 
-        plugin.getServer().getScheduler().runTaskAsynchronously(plugin, () -> {
+        FoliaScheduler.runAsync(plugin, () -> {
             String targetUrl = "https://sessionserver.mojang.com/session/minecraft/profile/" + uuid.toString().replace("-", "") + "?unsigned=false";
 
             try (InputStreamReader reader = new InputStreamReader(new URL(targetUrl).openStream(), StandardCharsets.UTF_8)) {
