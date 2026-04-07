@@ -2,6 +2,7 @@ package io.github.bakedlibs.dough.skins;
 
 import java.net.URL;
 import java.lang.reflect.Method;
+import java.lang.reflect.Constructor;
 import java.util.UUID;
 
 import javax.annotation.Nonnull;
@@ -12,8 +13,11 @@ import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.profile.PlayerProfile;
 import org.bukkit.profile.PlayerTextures;
 
+import com.google.common.collect.Multimap;
+import com.google.common.collect.LinkedHashMultimap;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
 
 import io.github.bakedlibs.dough.reflection.ReflectionUtils;
 import io.github.bakedlibs.dough.versions.MinecraftVersion;
@@ -45,10 +49,41 @@ public final class CustomGameProfile {
         this.uuid = uuid;
         this.skinUrl = url;
         this.texture = texture;
-        this.gameProfile = new GameProfile(uuid, PLAYER_NAME);
+        this.gameProfile = createGameProfile(uuid, texture);
+    }
 
-        if (texture != null) {
-            putTextureProperty(gameProfile, texture);
+    @Nonnull
+    private static GameProfile createGameProfile(@Nonnull UUID uuid, @Nullable String texture) {
+        try {
+            Constructor<GameProfile> modernConstructor = GameProfile.class.getConstructor(UUID.class, String.class, PropertyMap.class);
+            PropertyMap properties = createMutablePropertyMap();
+
+            if (texture != null) {
+                properties.put(PROPERTY_KEY, new Property(PROPERTY_KEY, texture));
+            }
+
+            return modernConstructor.newInstance(uuid, PLAYER_NAME, properties);
+        } catch (NoSuchMethodException ignored) {
+            GameProfile profile = new GameProfile(uuid, PLAYER_NAME);
+
+            if (texture != null) {
+                putTextureProperty(profile, texture);
+            }
+
+            return profile;
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unable to create GameProfile", e);
+        }
+    }
+
+    @Nonnull
+    private static PropertyMap createMutablePropertyMap() throws ReflectiveOperationException {
+        try {
+            Constructor<PropertyMap> legacyConstructor = PropertyMap.class.getConstructor();
+            return legacyConstructor.newInstance();
+        } catch (NoSuchMethodException ignored) {
+            Constructor<PropertyMap> modernConstructor = PropertyMap.class.getConstructor(Multimap.class);
+            return modernConstructor.newInstance(LinkedHashMultimap.create());
         }
     }
 
