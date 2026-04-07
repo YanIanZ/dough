@@ -1,6 +1,7 @@
 package io.github.bakedlibs.dough.skins;
 
 import java.net.URL;
+import java.lang.reflect.Method;
 import java.util.UUID;
 
 import javax.annotation.Nonnull;
@@ -47,7 +48,28 @@ public final class CustomGameProfile {
         this.gameProfile = new GameProfile(uuid, PLAYER_NAME);
 
         if (texture != null) {
-            gameProfile.getProperties().put(PROPERTY_KEY, new Property(PROPERTY_KEY, texture));
+            putTextureProperty(gameProfile, texture);
+        }
+    }
+
+    private static void putTextureProperty(@Nonnull GameProfile profile, @Nonnull String texture) {
+        try {
+            Object properties = getPropertiesView(profile);
+            Method putMethod = properties.getClass().getMethod("put", Object.class, Object.class);
+            putMethod.invoke(properties, PROPERTY_KEY, new Property(PROPERTY_KEY, texture));
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("Unable to set texture property on GameProfile", e);
+        }
+    }
+
+    @Nonnull
+    private static Object getPropertiesView(@Nonnull GameProfile profile) throws ReflectiveOperationException {
+        try {
+            Method legacyAccessor = GameProfile.class.getMethod("getProperties");
+            return legacyAccessor.invoke(profile);
+        } catch (NoSuchMethodException ignored) {
+            Method modernAccessor = GameProfile.class.getMethod("properties");
+            return modernAccessor.invoke(profile);
         }
     }
 
