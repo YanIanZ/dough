@@ -14,12 +14,12 @@ version = providers.gradleProperty("projectVersion").orElse("1.4.1").get()
 val paperApiVersion = "1.21.11-R0.1-SNAPSHOT"
 val spigotApiVersion = "1.21.11-R0.2-SNAPSHOT"
 val adventureApiVersion = "4.24.0"
+val adventureMiniMessageVersion = "4.24.0"
 val jsr305Version = "3.0.2"
 val junitBomVersion = "5.10.3"
 val mockitoVersion = "4.11.0"
 val mockBukkitVersion = "2.85.2"
 val paperLibVersion = "1.0.7"
-val authlibVersion = "6.0.52"
 val commonsLangVersion = "2.6"
 
 subprojects {
@@ -69,13 +69,12 @@ subprojects {
         withJavadocJar()
     }
 
+    // Note: dough-api handles its own Maven publication via its own afterEvaluate block
     afterEvaluate {
-        configure<PublishingExtension> {
-            publications {
-                create<MavenPublication>("mavenJava") {
-                    if (components.names.contains("shadow")) {
-                        from(components["shadow"])
-                    } else {
+        if (project.name != "dough-api") {
+            configure<PublishingExtension> {
+                publications {
+                    create<MavenPublication>("mavenJava") {
                         from(components["java"])
                     }
                 }
@@ -97,6 +96,7 @@ subprojects {
             compileOnly("io.papermc.paper:paper-api:$paperApiVersion")
             compileOnly("org.spigotmc:spigot-api:$spigotApiVersion")
             compileOnly("net.kyori:adventure-api:$adventureApiVersion")
+            compileOnly("net.kyori:adventure-text-serializer-plain:$adventureApiVersion")
         }
         compileOnly("com.google.code.findbugs:jsr305:$jsr305Version")
         compileOnly("commons-lang:commons-lang:$commonsLangVersion")
@@ -113,30 +113,114 @@ subprojects {
 
     tasks.test {
         useJUnitPlatform()
+        failOnNoDiscoveredTests.set(false)
+    }
+}
+
+project(":dough-api") {
+    // Override publication to explicitly publish the shadow JAR (fat bundle with all modules)
+    afterEvaluate {
+        configure<PublishingExtension> {
+            publications {
+                create<MavenPublication>("mavenJava") {
+                    artifact(tasks.named<ShadowJar>("shadowJar"))
+                }
+            }
+        }
+    }
+
+    apply(plugin = "com.gradleup.shadow")
+
+    configurations.matching { it.name == "compileOnly" || it.name == "compileOnlyApi" }.configureEach {
+        withDependencies {
+            forEach { dependency ->
+                if (dependency is org.gradle.api.artifacts.ModuleDependency) {
+                    dependency.isTransitive = false
+                }
+            }
+        }
+    }
+
+    dependencies {
+        implementation(project(":dough-common"))
+        implementation(project(":dough-config"))
+        implementation(project(":dough-chat"))
+        implementation(project(":dough-data"))
+        implementation(project(":dough-skins"))
+        implementation(project(":dough-items"))
+        implementation(project(":dough-inventories"))
+        implementation(project(":dough-protection"))
+        implementation(project(":dough-recipes"))
+        implementation(project(":dough-updater"))
+        implementation(project(":dough-scheduling"))
+        implementation(project(":dough-gui"))
+        implementation(project(":dough-storage"))
+        implementation("commons-lang:commons-lang:$commonsLangVersion")
+
+        compileOnly("com.sk89q.worldedit:worldedit-core:7.2.17")
+        compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.2.17")
+        compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.9")
+        compileOnly("com.github.elBukkit:PreciousStones:1.17.2")
+        compileOnly("net.coreprotect:coreprotect:21.3")
+        compileOnly("de.diddiz:logblock:1.17.0.0-SNAPSHOT")
+        compileOnly("com.github.marcelo-mason:SimpleClans:7c3db52796")
+        compileOnly("com.github.TechFortress:GriefPrevention:16.18.2")
+        compileOnly("com.github.dmulloy2.LWC:lwc:master-SNAPSHOT")
+        compileOnly("me.lucko:helper:5.6.14")
+        compileOnly("com.massivecraft:Factions:1.6.9.5-4.1.4-STABLE")
+        compileOnly("com.github.LlmDl:Towny:1b86d017c5")
+        compileOnly("com.github.fubira:Lockette:9dac96e8f8")
+        compileOnly("com.plotsquared:PlotSquared-Core:6.11.1") {
+            exclude(group = "org.projectlombok", module = "lombok")
+        }
+        compileOnly("br.net.fabiozumbi12.RedProtect:RedProtect-Core:7.7.3")
+        compileOnly("br.net.fabiozumbi12.RedProtect:RedProtect-Spigot:7.7.3")
+        compileOnly("world.bentobox:bentobox:1.20.1-SNAPSHOT")
+        compileOnly("nl.rutgerkok:blocklocker:1.10.4")
+        compileOnly("com.github.angeschossen:LandsAPI:6.29.12")
+        compileOnly("com.github.angeschossen:ChestProtectAPI:3.9.1")
+        compileOnly("net.dzikoysk.funnyguilds:plugin:4.12.0") {
+            exclude(group = "com.github.PikaMug", module = "LocaleLib")
+        }
+        compileOnly("com.github.WiIIiam278:HuskTowns:1.7")
+        compileOnly("de.epiceric:ShopChest:1.13-SNAPSHOT")
+        compileOnly("org.popcraft:bolt-bukkit:1.0.580")
+        compileOnly("org.popcraft:bolt-common:1.0.580")
+    }
+
+    tasks.named<Jar>("jar") {
+        enabled = false
+    }
+
+    tasks.named<ShadowJar>("shadowJar") {
+        archiveClassifier.set("")
+        exclude("META-INF/*")
+    }
+
+    tasks.named("assemble") {
+        dependsOn(tasks.named("shadowJar"))
     }
 }
 
 project(":dough-common") {
     dependencies {
         implementation("io.papermc:paperlib:$paperLibVersion")
-    }
-}
-
-project(":dough-reflection") {
-    dependencies {
-        compileOnly(project(":dough-common"))
+        compileOnly("net.kyori:adventure-text-minimessage:$adventureMiniMessageVersion")
     }
 }
 
 project(":dough-config") {
     dependencies {
         compileOnly(project(":dough-common"))
+        implementation(project(":dough-common"))
     }
 }
 
 project(":dough-chat") {
     dependencies {
         compileOnly(project(":dough-common"))
+        compileOnly(project(":dough-scheduling"))
+        implementation(project(":dough-scheduling"))
     }
 }
 
@@ -149,23 +233,20 @@ project(":dough-data") {
 project(":dough-skins") {
     dependencies {
         compileOnly(project(":dough-common"))
-        compileOnly(project(":dough-reflection"))
         compileOnly(project(":dough-scheduling"))
-        compileOnly("com.mojang:authlib:$authlibVersion")
     }
 }
 
 project(":dough-items") {
     dependencies {
         compileOnly(project(":dough-common"))
-        compileOnly(project(":dough-reflection"))
+        implementation(project(":dough-common"))
     }
 }
 
 project(":dough-inventories") {
     dependencies {
         implementation(project(":dough-common"))
-        implementation(project(":dough-reflection"))
         implementation(project(":dough-items"))
     }
 }
@@ -274,6 +355,7 @@ project(":dough-recipes") {
 project(":dough-updater") {
     dependencies {
         compileOnly(project(":dough-common"))
+        compileOnly(project(":dough-scheduling"))
     }
 }
 
@@ -283,76 +365,16 @@ project(":dough-scheduling") {
     }
 }
 
-project(":dough-api") {
-    apply(plugin = "com.gradleup.shadow")
-
-    configurations.matching { it.name == "compileOnly" || it.name == "compileOnlyApi" }.configureEach {
-        withDependencies {
-            forEach { dependency ->
-                if (dependency is org.gradle.api.artifacts.ModuleDependency) {
-                    dependency.isTransitive = false
-                }
-            }
-        }
-    }
-
+project(":dough-gui") {
     dependencies {
-        implementation(project(":dough-common"))
-        implementation(project(":dough-reflection"))
-        implementation(project(":dough-config"))
-        implementation(project(":dough-chat"))
-        implementation(project(":dough-data"))
-        implementation(project(":dough-skins"))
-        implementation(project(":dough-items"))
-        implementation(project(":dough-inventories"))
-        implementation(project(":dough-protection"))
-        implementation(project(":dough-recipes"))
-        implementation(project(":dough-updater"))
+        compileOnly(project(":dough-common"))
+        compileOnly(project(":dough-scheduling"))
         implementation(project(":dough-scheduling"))
-        implementation("commons-lang:commons-lang:$commonsLangVersion")
-
-        compileOnly("com.mojang:authlib:$authlibVersion")
-        compileOnly("com.sk89q.worldedit:worldedit-core:7.2.17")
-        compileOnly("com.sk89q.worldedit:worldedit-bukkit:7.2.17")
-        compileOnly("com.sk89q.worldguard:worldguard-bukkit:7.0.9")
-        compileOnly("com.github.elBukkit:PreciousStones:1.17.2")
-        compileOnly("net.coreprotect:coreprotect:21.3")
-        compileOnly("de.diddiz:logblock:1.17.0.0-SNAPSHOT")
-        compileOnly("com.github.marcelo-mason:SimpleClans:7c3db52796")
-        compileOnly("com.github.TechFortress:GriefPrevention:16.18.2")
-        compileOnly("com.github.dmulloy2.LWC:lwc:master-SNAPSHOT")
-        compileOnly("me.lucko:helper:5.6.14")
-        compileOnly("com.massivecraft:Factions:1.6.9.5-4.1.4-STABLE")
-        compileOnly("com.github.LlmDl:Towny:1b86d017c5")
-        compileOnly("com.github.fubira:Lockette:9dac96e8f8")
-        compileOnly("com.plotsquared:PlotSquared-Core:6.11.1") {
-            exclude(group = "org.projectlombok", module = "lombok")
-        }
-        compileOnly("br.net.fabiozumbi12.RedProtect:RedProtect-Core:7.7.3")
-        compileOnly("br.net.fabiozumbi12.RedProtect:RedProtect-Spigot:7.7.3")
-        compileOnly("world.bentobox:bentobox:1.20.1-SNAPSHOT")
-        compileOnly("nl.rutgerkok:blocklocker:1.10.4")
-        compileOnly("com.github.angeschossen:LandsAPI:6.29.12")
-        compileOnly("com.github.angeschossen:ChestProtectAPI:3.9.1")
-        compileOnly("net.dzikoysk.funnyguilds:plugin:4.12.0") {
-            exclude(group = "com.github.PikaMug", module = "LocaleLib")
-        }
-        compileOnly("com.github.WiIIiam278:HuskTowns:1.7")
-        compileOnly("de.epiceric:ShopChest:1.13-SNAPSHOT")
-        compileOnly("org.popcraft:bolt-bukkit:1.0.580")
-        compileOnly("org.popcraft:bolt-common:1.0.580")
     }
+}
 
-    tasks.named<Jar>("jar") {
-        enabled = false
-    }
-
-    tasks.named<ShadowJar>("shadowJar") {
-        archiveClassifier.set("")
-        exclude("META-INF/*")
-    }
-
-    tasks.named("assemble") {
-        dependsOn(tasks.named("shadowJar"))
+project(":dough-storage") {
+    dependencies {
+        compileOnly(project(":dough-common"))
     }
 }
